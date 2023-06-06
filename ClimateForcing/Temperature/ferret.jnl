@@ -1,0 +1,64 @@
+ ! NOAA/PMEL TMAP
+ ! PyFerret v7.63 (optimized)
+ ! Darwin 19.6.0 - 10/13/20
+ !  5-Jun-23 15:39     
+
+set mode verify
+use DataFiles/LE2-1001-001-TEMP.nc
+show data
+shade TEMP[k=1,l=1]
+shade TEMP[k=1,l=86]
+LET LENS_TEMP_0to1200 = TEMP[d=1, z=0:1200@ave]
+shade LENS_TEMP_0to1200[l=1]
+shade LENS_TEMP_0to1200[l=86]
+LET LENS_TEMP_0to1200_ave = LENS_TEMP_0to1200[i=@ave, j=@ave]
+plot LENS_TEMP_0to1200_ave
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+show data
+show var
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+cancel data/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+go RealmTemp_ts_LENS.jnl
+cancel var/all
+cancel var/all
+cancel data/all
+go RealmTemp_ts_LENS.jnl
+cancel data/all
+cancel var/all
+quit

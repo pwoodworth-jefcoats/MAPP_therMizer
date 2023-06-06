@@ -1,0 +1,134 @@
+---
+title: "Prep_TempRealms_therMizer"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: '2023-06-05'
+output: html_document
+---
+
+## Prep temperature forcing for input into therMizer
+
+This script uses the files output by RealmTemp_ts_LENS.jnl and RealmTemp_ts_WOA.jnl (for use with
+[PyFerret](https://ferret.pmel.noaa.gov/Ferret/)) to create an `ocean_temp` array that will be used by 
+therMizer.  These are temperatures that have been vertically averaged over each species' depth range and 
+then spatially averaged over the model domain.  For details on this, see [Woodworth-Jefcoats et al. 2019](https://www.frontiersin.org/articles/10.3389/fmars.2019.00383/full).
+
+Note that this script is rerun for each individual ensemble member.
+
+```{r}
+# Load packages
+library(here)
+```
+
+```{r}
+# Load WOA baseline, skipping the 6-line header
+r1_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to20_ave.dat"), 
+                     skip = 6, header = FALSE)
+r2_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to50_ave.dat"), 
+                     skip = 6, header = FALSE)
+r3_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to85_ave.dat"), 
+                     skip = 6, header = FALSE)
+r4_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to100_ave.dat"), 
+                     skip = 6, header = FALSE)
+r5_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to150_ave.dat"), 
+                     skip = 6, header = FALSE)
+r6_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to200_ave.dat"), 
+                     skip = 6, header = FALSE)
+r7_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_0to1200_ave.dat"), 
+                     skip = 6, header = FALSE)
+r8_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_50to150_ave.dat"), 
+                     skip = 6, header = FALSE)
+r9_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_50to200_ave.dat"), 
+                     skip = 6, header = FALSE)
+r10_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_50to300_ave.dat"),
+                      skip = 6, header = FALSE)
+r11_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_100to200_ave.dat"),
+                      skip = 6, header = FALSE)
+r12_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_100to250_ave.dat"),
+                      skip = 6, header = FALSE)
+r13_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_100to400_ave.dat"),
+                      skip = 6, header = FALSE)
+r14_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_150to600_ave.dat"),
+                      skip = 6, header = FALSE)
+r15_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_200to400_ave.dat"),
+                      skip = 6, header = FALSE)
+r16_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_200to980_ave.dat"),
+                      skip = 6, header = FALSE)
+r17_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_250to500_ave.dat"),
+                      skip = 6, header = FALSE)
+r18_WOA <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "WOA_TEMP_400to1200_ave.dat"),
+                      skip = 6, header = FALSE)
+
+# Load simulation data, skipping the 7-line header
+r1 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to20_ave.dat"), 
+                 skip = 7, header = FALSE)
+r2 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to50_ave.dat"), 
+                 skip = 7, header = FALSE)
+r3 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to85_ave.dat"), 
+                 skip = 7, header = FALSE)
+r4 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to100_ave.dat"), 
+                 skip = 7, header = FALSE)
+r5 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to150_ave.dat"), 
+                 skip = 7, header = FALSE)
+r6 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to200_ave.dat"), 
+                 skip = 7, header = FALSE)
+r7 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_0to1200_ave.dat"), 
+                 skip = 7, header = FALSE)
+r8 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_50to150_ave.dat"), 
+                 skip = 7, header = FALSE)
+r9 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_50to200_ave.dat"), 
+                 skip = 7, header = FALSE)
+r10 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_50to300_ave.dat"), 
+                  skip = 7, header = FALSE)
+r11 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_100to200_ave.dat"), 
+                  skip = 7, header = FALSE)
+r12 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_100to250_ave.dat"), 
+                  skip = 7, header = FALSE)
+r13 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_100to400_ave.dat"), 
+                  skip = 7, header = FALSE)
+r14 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_150to600_ave.dat"), 
+                  skip = 7, header = FALSE)
+r15 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_200to400_ave.dat"), 
+                  skip = 7, header = FALSE)
+r16 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_200to980_ave.dat"), 
+                  skip = 7, header = FALSE)
+r17 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_250to500_ave.dat"), 
+                  skip = 7, header = FALSE)
+r18 <- read.delim(here("ClimateForcing", "Temperature", "DataFiles", "LE2_010_TEMP_400to1200_ave.dat"), 
+                  skip = 7, header = FALSE)
+
+# Match with other therMizer parameters
+r <- c("r0to20", "r0to50", "r0to85", "r0to100", "r0to150", "r0to200",  "r0to1200", "r50to150", "r50to200", "r50to300", "r100to200", "r100to250", "r100to400", "r150to600", "r200to400", "r200to980", "r250to500", "r400to1200")
+
+# Create time steps, 2016 - 2100
+time_steps <- seq(2016, 2100, 1)
+
+# Create ocean_temp array
+ocean_temp_realm_array <- array(NA, dim = c(length(time_steps), length(r)), dimnames = list(time = time_steps, realm_names = r))
+
+# Fill array
+ocean_temp_realm_array[,] <- cbind((r1[2:dim(r1)[1],2] - r1[1,2]) + r1_WOA[1,1],
+                               (r2[2:dim(r1)[1],2,2] - r2[1,2]) + r2_WOA[1,1],
+                               (r3[2:dim(r1)[1],2,2] - r3[1,2]) + r3_WOA[1,1],
+                               (r4[2:dim(r1)[1],2,2] - r4[1,2]) + r4_WOA[1,1],
+                               (r5[2:dim(r1)[1],2,2] - r5[1,2]) + r5_WOA[1,1],
+                               (r6[2:dim(r1)[1],2,2] - r6[1,2]) + r6_WOA[1,1],
+                               (r7[2:dim(r1)[1],2,2] - r7[1,2]) + r7_WOA[1,1],
+                               (r8[2:dim(r1)[1],2,2] - r8[1,2]) + r8_WOA[1,1],
+                               (r9[2:dim(r1)[1],2,2] - r9[1,2]) + r9_WOA[1,1],
+                               (r10[2:dim(r1)[1],2,2] - r10[1,2]) + r10_WOA[1,1],
+                               (r11[2:dim(r1)[1],2,2] - r11[1,2]) + r11_WOA[1,1],
+                               (r12[2:dim(r1)[1],2,2] - r12[1,2]) + r12_WOA[1,1],
+                               (r13[2:dim(r1)[1],2,2] - r13[1,2]) + r13_WOA[1,1],
+                               (r14[2:dim(r1)[1],2,2] - r14[1,2]) + r14_WOA[1,1],
+                               (r15[2:dim(r1)[1],2,2] - r15[1,2]) + r15_WOA[1,1],
+                               (r16[2:dim(r1)[1],2,2] - r16[1,2]) + r16_WOA[1,1],
+                               (r17[2:dim(r1)[1],2,2] - r17[1,2]) + r17_WOA[1,1],
+                               (r18[2:dim(r1)[1],2,2] - r18[1,2]) + r18_WOA[1,1])
+
+# Save data
+write.table(ocean_temp_realm_array, 
+            file = here("ClimateForcing", "Temperature", "DataFiles", 
+                        "LE2_010_ocean_temp_realm_array.dat"), 
+            quote = FALSE, row.names = TRUE, col.names = TRUE)
+
+```
