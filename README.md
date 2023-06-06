@@ -1,6 +1,52 @@
 # MAPP_therMizer
-This repository includes the code used to run therMizer simulations
-for a UH-NOAA MAPP collaboration.
+This repository is home to the code used to run therMizer simulations
+for a UH-NOAA MAPP collaboration.  It's currently being built out, so
+if you don't see a file that's mentioned know that it'll be available
+soon.  I'll remove this message once the basic construction is 
+complete.
+
+## Climate Forcing
+therMizer is forced by both temperature and plankton data. These data
+come from members of the CESM2 earth system model large ensemble (LENS).
+
+### Temperature data
+Temperature was vertically averaged over depth ranges representative of 
+species' vertical habitat use.  It was then horizontally averaged over the
+model domain. 
+
+Temperatures from the World Ocean Atlas were used as a baseline to which
+the LENS-projected change in temperature were applied.  Change was 
+measured as the difference between 2015 and the years 2016 - 2100.
+
+Further details about processing the temperature data can be found in
+`Workflow_Temperature.Rmd`.
+
+### Plankton data
+Plankton carbon was vertically integrated over the upper 150 m of the water
+column and then summed over the model domain.  This was done for small 
+phytoplankton, diatoms, diazotrophs, and zooplankton, individually.  Within
+each class of plankton, total carbon was converted to numerical abundance and
+used to calculate a resource spectra which sets the prey available at each
+time step in the therMizer simulation.
+
+Further details about processing the plankton data can be found in
+`Workflow_Plankton.Rmd`.
+
+## Fishing Forcing
+A static fishing simulation is used to assess the effects of climate variability 
+and change.  Several dynamic fishing simulations are run to assess the potential 
+effects of changing fishing mortality.
+
+Further details about preparing these simulation forcings can be found in
+`Workflow_Fishing.Rmd`.
+
+## therMizer Simulations
+TBD was used to run the therMizer simulations.
+
+Further information, including all code, for the [mizer](https://sizespectrum.org/mizer/) food web model and 
+the [therMizer](https://github.com/sizespectrum/therMizer) model extension is available online.
+
+---
 
 ## Questions?  Comments?  Corrections?
 Please open an issue or email Phoebe.Woodworth-Jefcoats@noaa.gov
