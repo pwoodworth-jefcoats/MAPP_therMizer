@@ -1,0 +1,49 @@
+! The purpose of this script is to create time series of the LENS data for use with therMizer for a UH-NOAA MAPP collaboration
+
+! We'll vertically integrate the plankton carbon and then sum across the domain. 
+! Note that I'm updating the script for each variable.
+
+use LE2-1001-001-zooC.nc
+use LE2-1021-002-zooC.nc
+use LE2-1041-003-zooC.nc
+use LE2-1061-004-zooC.nc
+use LE2-1081-005-zooC.nc
+use LE2-1101-006-zooC.nc
+use LE2-1121-007-zooC.nc
+use LE2-1141-008-zooC.nc
+use LE2-1161-009-zooC.nc
+use LE2-1181-010-zooC.nc
+
+LET LE2_001_intzooC = zooC[d=1, k=@DIN]
+LET LE2_002_intzooC = zooC[d=2, k=@DIN]
+LET LE2_003_intzooC = zooC[d=3, k=@DIN]
+LET LE2_004_intzooC = zooC[d=4, k=@DIN]
+LET LE2_005_intzooC = zooC[d=5, k=@DIN]
+LET LE2_006_intzooC = zooC[d=6, k=@DIN]
+LET LE2_007_intzooC = zooC[d=7, k=@DIN]
+LET LE2_008_intzooC = zooC[d=8, k=@DIN]
+LET LE2_009_intzooC = zooC[d=9, k=@DIN]
+LET LE2_010_intzooC = zooC[d=10, k=@DIN]
+
+LET LE2_001_intzooC_sum = LE2_001_intzooC[i=@SUM, j=@SUM]
+LET LE2_002_intzooC_sum = LE2_002_intzooC[i=@SUM, j=@SUM]
+LET LE2_003_intzooC_sum = LE2_003_intzooC[i=@SUM, j=@SUM]
+LET LE2_004_intzooC_sum = LE2_004_intzooC[i=@SUM, j=@SUM]
+LET LE2_005_intzooC_sum = LE2_005_intzooC[i=@SUM, j=@SUM]
+LET LE2_006_intzooC_sum = LE2_006_intzooC[i=@SUM, j=@SUM]
+LET LE2_007_intzooC_sum = LE2_007_intzooC[i=@SUM, j=@SUM]
+LET LE2_008_intzooC_sum = LE2_008_intzooC[i=@SUM, j=@SUM]
+LET LE2_009_intzooC_sum = LE2_009_intzooC[i=@SUM, j=@SUM]
+LET LE2_010_intzooC_sum = LE2_010_intzooC[i=@SUM, j=@SUM]
+
+
+LIST/FORMAT=TAB/FILE=LE2_001_intzooC_sum.dat LE2_001_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_002_intzooC_sum.dat LE2_002_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_003_intzooC_sum.dat LE2_003_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_004_intzooC_sum.dat LE2_004_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_005_intzooC_sum.dat LE2_005_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_006_intzooC_sum.dat LE2_006_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_007_intzooC_sum.dat LE2_007_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_008_intzooC_sum.dat LE2_008_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_009_intzooC_sum.dat LE2_009_intzooC_sum
+LIST/FORMAT=TAB/FILE=LE2_010_intzooC_sum.dat LE2_010_intzooC_sum

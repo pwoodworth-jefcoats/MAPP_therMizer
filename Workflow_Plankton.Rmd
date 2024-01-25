@@ -1,0 +1,54 @@
+---
+title: "Workflow_Plankton"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: '2023-06-06'
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+---
+
+__Workflow for processing LENS data for use with therMizer__
+This document describes the workflow for preparing the LENS plankton data for use in `therMizer`.  
+
+The scripts mentioned are in ClimateForcing and ClimateForcing/Plankton.  Where possible, the data 
+files are in ClimateForcing/Plankton/DataFiles.  Some of the data files are too large to include in this
+repository.
+
+Most of this workflow happens in [R](https://www.r-project.org/).  A few steps use [PyFerret](https://ferret.pmel.noaa.gov/Ferret/) or [Matlab](https://www.mathworks.com/products/matlab.html). 
+It's likely you could do the PyFerret steps in R.  I use PyFerret out of habit because it's a free
+language built specifically to handle large gridded datasets. You could also probably do the Matlab 
+part in R.  I just did it in Matlab out of habit.
+
+## Data Access
+LENS data were provided by a project collaborator.
+
+## Data Wrangling
+The remaining steps take the provided LENS files and format them to what's used for the 
+therMizer simulations.
+
+### Spatial aggregation
+The LENS data were aggregated across rectangular subregions with Matlab using 
+`SubregionCombine.mlx`.  I updated the script for each variable and ensemble member.  This is why
+the posted version reflects temperature rather than plankton.  
+
+The PyFerret script `Plankton_ts.jnl` was used to spatially aggregate the data.  Plankton carbon was
+vertically integrated within each grid cell and then summed across the model domain.
+
+### Formatting and calibrating plankton data for therMizer
+The LENS data were combined and formatted for `therMizer` using the R script `Prep_Plankton_therMizer.Rmd`.
+
+The baseline mizer model used for calibrating the resource spectrum was run
+using the R script `MAPP_run_Mizer_ResourceCalibration.Rmd`.  Iterative runs of therMizer
+were done using the R script `MAPP_run_therMizer_ResourceCalibration.Rmd`.
+
+## Final Products
+This workflow results in the following file that is used as input for `therMizer`:  
+* `LENS_resource_spectra_S1.075I1.95.Rdata`  
+
+It also creates time series of the spectra slopes and intercepts, because these can be helpful when trying to understand the
+resource.  
+* `LENS_resource_intercept_S1.075I1.95.Rdata`  
+* `LENS_resource_slope_S1.075I1.95.Rdata`
