@@ -41,9 +41,9 @@ zoo_mid <- (4/3)*pi*((0.5*0.0001*10001)^3)
 plankton_x <- log10(c(small_mid, large_mid, zoo_mid))
 
 # Create arrays for output and fill them in the loop below
-out_LENS <- array(numeric(), c(86,226,10)) # 600 time steps by 226 size classes by 10 ensemble members
-LENS_slope <- array(numeric(), c(86,1,10)) # 600 time steps by 10 ensemble members
-LENS_intercept <- array(numeric(), c(86,1,10)) # 600 time steps by 10 ensemble members
+out_LENS <- array(numeric(), c(86,226,10)) # 86 time steps by 226 size classes by 10 ensemble members
+LENS_slope <- array(numeric(), c(86,1,10)) # 86 time steps by 10 ensemble members
+LENS_intercept <- array(numeric(), c(86,1,10)) # 86 time steps by 10 ensemble members
 
 # Load total carbon data, skipping the 7-line header
 # There are 10 ensemble members, so we're going to combine things for efficiency
