@@ -1,0 +1,150 @@
+---
+title: "MAPP_run_therMizer_FishingValidation"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: "2024-02-28"
+output: html_document
+---
+
+## Model runs
+
+This script runs _therMizer_ for each of the ten LENS members for the purpose of validating the modeled catch.  
+
+Set up the environment:
+```{r}
+# Load libraries
+library(mizer)
+library(here)
+library("remotes")
+remotes::install_github("sizespectrum/therMizer")
+library("therMizer")
+```
+
+Set up the species parameters:
+```{r}
+# Load parameters 
+HIparams <- read.csv("HIregion_species_params.csv", header = TRUE)
+HIinter <- read.csv("HIregion_inter.csv", row.names = 1)
+HIinter <- as(HIinter,"matrix")
+HIgears <- read.csv("HIregion_gears_params.csv", header = TRUE)
+
+# Generate parameters
+params <- newMultispeciesParams(HIparams, interaction = HIinter, kappa = 1e12, min_w_pp = 1e-14, w_pp_cutoff = 455400) 
+```
+
+Set up time steps:
+```{r}
+time_steps <- seq(0,85,1)
+
+# I ran into trouble using any time steps that didn't start with 0.
+```
+
+Straightforward approach to run each ensemble member while keeping the inputs the correct dimensions (and avoiding a lot of re-coding or condensing all the chunks into a single loop):
+```{r}
+# Ensemble member (1 - 10)
+m = 10
+```
+
+Set up the resource:
+```{r}
+# Load resource spectra
+LENS_plankton <- load(here("ClimateForcing", "Plankton", "DataFiles",
+                           "LENS_resource_spectra_S1.075I1.975.Rdata"))
+
+LENS_plankton_m <- out_LENS[,,m]
+LENS_plankton_m <- as(LENS_plankton_m, "matrix")
+sizes <- names(params@initial_n_pp)
+n_pp_array <- array(NA, dim = c(length(time_steps), length(sizes)), dimnames = list(time = time_steps, w = sizes))
+
+# Fill array
+# Need an extra time step preceding the simulation
+n_pp_array[1,] <- LENS_plankton_m[1,]
+for (t in seq(1,length(time_steps) - 1,1)) {
+  n_pp_array[t + 1,] <- LENS_plankton_m[t,]
+}
+```
+
+Set up temperature-related information:
+```{r}
+# Load ocean temp array
+if (m < 10) {
+  ocean_temp <- read.table(here("ClimateForcing", "Temperature", "DataFiles",
+                                paste("LE2_00", m, "_ocean_temp_realm_array.dat", sep = "")))
+  } else {
+  ocean_temp <- read.table(here("ClimateForcing", "Temperature", "DataFiles",
+                                paste("LE2_0", m, "_ocean_temp_realm_array.dat", sep = "")))
+  }
+
+ocean_temp <- as(ocean_temp, "matrix")
+r <- colnames(ocean_temp)
+ocean_temp_array <- array(NA, dim = c(length(time_steps), length(r)), dimnames = list(time = time_steps, realm_names = r))
+ocean_temp_array[1,] <- ocean_temp[1,]
+for (t in seq(1,length(time_steps) - 1, 1)) {
+  ocean_temp_array[t + 1,] <- ocean_temp[t,]
+}
+
+# Load vertical migration and exposure
+load("HIregion_vertical_migration_array.Rdata") # Note: this is named vertical_migration_array
+
+HIexposure <- read.table("HIregion_exposure_array.dat")
+HIexposure <- as(HIexposure, "matrix")
+```
+
+Set up the needed fishing selectivity function:
+```{r}
+# We need to define our double knife-edge selectivity function to match that 
+# used in Woodworth-Jefcoats et al. 2019
+double_knife_edge <- function(w, knife_edge_size1, knife_edge_size2, ...) { 
+	sel <- rep(0, length(w)) 
+	
+	# Phased in linearly
+	F0 <- which(w < knife_edge_size1) # to find one size smaller than that fished, for the 0 value 
+	F1 <- which(w < knife_edge_size2) # to find end of escalation size range 
+	lo_sel <- max(F0):max(F1) 
+	sel[lo_sel] <- seq(0, 1, length = length(lo_sel)) # linear increase from 0 to F 
+	sel[w >= knife_edge_size2] <- 1 
+	return(sel) 
+} 
+```
+
+Add gear parameters:
+```{r}
+gear_params(params) <- HIgears
+```
+
+Add temperature and resource information to the parameters:
+```{r}
+params <- upgradeTherParams(params, ocean_temp_array = ocean_temp_array,
+                            n_pp_array = n_pp_array, 
+                            vertical_migration_array = vertical_migration_array,
+                            exposure_array = HIexposure, 
+                            aerobic_effect = TRUE, metabolism_effect = TRUE)
+
+# Nice test to see that things are working correctly
+plotTherPerformance(params)
+plotTherScalar(params)
+```
+
+Project to steady-state, with constant fishing at F = 0.2 (the estimated F for most of the species modeled, per stock assessments):
+```{r}
+# Project to steady
+params_steady_F <- projectToSteady(params, t_max = 600, dt = 1/12, tol = 1e-7, effort = 0.2) 
+sim_steady_F <- projectToSteady(params, t_max = 600, dt = 1/12, tol = 1e-7, effort = 0.2, return_sim = TRUE) 
+
+# Test to see how things look
+plot(sim_steady_F)
+```
+
+Run simulations:
+```{r}
+# And do a simulation using the steady parameters
+projection_steady_F <- project(params_steady_F, dt = 1/12, t_max = 86, t_save = 1/12, effort = 0.2)
+
+# Test to see how things look
+plot(projection_steady_F)
+```
+
+Save output: 
+```{r}
+save(sim_steady_F, file = here("FishingForcing", "DataFiles",
+                               paste("LENS_", m, "_validate.Rdata", sep = "")))
+```

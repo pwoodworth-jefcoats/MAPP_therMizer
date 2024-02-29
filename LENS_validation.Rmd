@@ -1,0 +1,221 @@
+---
+title: "LENS_validation"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: "2024-02-29"
+output: html_document
+---
+
+## Compare catch at size
+
+This validation compares catch in numbers across body sizes.  This is pretty much the only validation data available at this level of detail for this fishery.
+
+Set up the environment:
+```{r}
+# Load libraries
+library(mizer)
+library(here)
+library("remotes")
+remotes::install_github("sizespectrum/therMizer")
+library("therMizer")
+```
+
+Set up the species parameters, just to make some things easier:
+```{r}
+# Load parameters 
+HIparams <- read.csv("HIregion_species_params.csv", header = TRUE)
+HIinter <- read.csv("HIregion_inter.csv", row.names = 1)
+HIinter <- as(HIinter,"matrix")
+HIgears <- read.csv("HIregion_gears_params.csv", header = TRUE)
+
+# Generate parameters
+params <- newMultispeciesParams(HIparams, interaction = HIinter, kappa = 1e12, min_w_pp = 1e-14, w_pp_cutoff = 455400) 
+```
+
+Load the validation simulations:
+```{r}
+# This is a little tedious, but I'm not sure of a better way
+load(here("FishingForcing", "DataFiles", "LENS_1_validate.Rdata"))
+sim_LENS_1 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_2_validate.Rdata"))
+sim_LENS_2 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_3_validate.Rdata"))
+sim_LENS_3 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_4_validate.Rdata"))
+sim_LENS_4 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_5_validate.Rdata"))
+sim_LENS_5 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_6_validate.Rdata"))
+sim_LENS_6 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_7_validate.Rdata"))
+sim_LENS_7 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_8_validate.Rdata"))
+sim_LENS_8 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_9_validate.Rdata"))
+sim_LENS_9 <- sim_steady_F
+rm(sim_steady_F)
+load(here("FishingForcing", "DataFiles", "LENS_10_validate.Rdata"))
+sim_LENS_10 <- sim_steady_F
+rm(sim_steady_F)
+```
+
+Load observed data that will be used to validate the model:
+```{r}
+# Load observed catch-at-size
+obsDirectory <- "/Users/phoebe.woodworth/Documents/Integrated Model/HawaiiLongline"
+albacore <- read.table(paste(obsDirectory,"/albacore_N.dat", sep = ""), header = FALSE)
+bigeye <- read.table(paste(obsDirectory,"/bigeye_N.dat", sep = ""), header = FALSE)
+blue_marlin <- read.table(paste(obsDirectory,"/blue_marlin_N.dat", sep = ""), header = FALSE)
+blue_shark <- read.table(paste(obsDirectory,"/blue_shark_N.dat", sep = ""), header = FALSE)
+lancetfish <- read.table(paste(obsDirectory,"/lancetfish_N.dat", sep = ""), header = FALSE)
+mahi <- read.table(paste(obsDirectory,"/mahi_N.dat", sep = ""), header = FALSE)
+opah <- read.table(paste(obsDirectory,"/opah_N.dat", sep = ""), header = FALSE)
+skipjack <- read.table(paste(obsDirectory,"/skipjack_N.dat", sep = ""), header = FALSE)
+striped_marlin <- read.table(paste(obsDirectory,"/striped_marlin_N.dat", sep = ""), header = FALSE)
+swordfish <- read.table(paste(obsDirectory,"/swordfish_N.dat", sep = ""), header = FALSE)
+wahoo <- read.table(paste(obsDirectory,"/wahoo_N.dat", sep = ""), header = FALSE)
+yellowfin <- read.table(paste(obsDirectory,"/yellowfin_N.dat", sep = ""), header = FALSE)
+
+# Aggregate species to speed things up
+observedN <- array(numeric(),c(12,100)) # species x size
+observedN[1,] <- bigeye[,2]
+observedN[2,] <- mahi[,2]
+observedN[3,] <- blue_shark[,2]
+observedN[4,] <- skipjack[,2]
+observedN[5,] <- yellowfin[,2]
+observedN[6,] <- albacore[,2]
+observedN[7,] <- striped_marlin[,2]
+observedN[8,] <- wahoo[,2]
+observedN[9,] <- swordfish[,2]
+observedN[10,] <- blue_marlin[,2]
+observedN[11,] <- lancetfish[,2]
+observedN[12,] <- opah[,2]
+```
+
+Determine yield-at-size:
+```{r}
+# Write a function to get yield by number at size
+# This borrowed from other mizer functions
+getYieldSize <- function(object) {
+  no_sp <- nrow(params@species_params)
+  min_w <- rep(min(params@w),no_sp)
+  max_w <- rep(max(params@w),no_sp)
+  
+  min_n <- plyr::aaply(min_w, 1, function(x) params@w >= x, .drop = FALSE)
+  max_n <- plyr::aaply(max_w, 1, function(x) params@w <= x, .drop = FALSE)
+  size_range <- min_n & max_n
+  dimnames(size_range) <- list(sp = params@species_params$species, 
+                             w = signif(params@w, 3)) 
+  
+	if (is(object, "MizerSim")) {
+		sim <- object
+		n_at_size <- sweep(sim@n, c(2,3), size_range, '*')
+		f_gear <- getFMortGear(sim)
+		f_gear_sz <- sweep(f_gear, c(3,4),size_range,'*')
+		yield_gear_species_size <- sweep(f_gear_sz, c(1,3,4), n_at_size,'*')
+		return(apply(yield_gear_species_size,c(1,3,4),sum))
+	}
+	stop("'object' should be a MizerSim object")
+}
+
+# Yield at size from each simulation
+# Again, tedious, but at a loss for a better way
+# Array is time x species x size x ensemble member
+yield_at_size <- array(numeric(), c(1,12,100,10))
+
+yld <- getYieldSize(sim_LENS_1)
+t_end <- dim(yld)[1]
+yield_at_size[,,,1] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_2)
+t_end <- dim(yld)[1]
+yield_at_size[,,,2] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_3)
+t_end <- dim(yld)[1]
+yield_at_size[,,,3] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_4)
+t_end <- dim(yld)[1]
+yield_at_size[,,,4] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_5)
+t_end <- dim(yld)[1]
+yield_at_size[,,,5] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_6)
+t_end <- dim(yld)[1]
+yield_at_size[,,,6] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_7)
+t_end <- dim(yld)[1]
+yield_at_size[,,,7] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_8)
+t_end <- dim(yld)[1]
+yield_at_size[,,,8] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_9)
+t_end <- dim(yld)[1]
+yield_at_size[,,,9] <- yld[t_end,,]
+rm(t_end, yld)
+yld <- getYieldSize(sim_LENS_10)
+t_end <- dim(yld)[1]
+yield_at_size[,,,10] <- yld[t_end,,]
+rm(t_end, yld)
+```
+
+Compare modeled and observed catch, numerically and visually:
+```{r}
+# Create arrays for r and p-value
+# species x ensemble member
+rValues <- array(numeric(),c(12, 10)) 
+pValues <- array(numeric(),c(12, 10)) 
+
+for (sp in seq(1,12,1)) {
+  for (m in seq(1,10,1)) {
+    calib_test <- cor.test(observedN[sp,], yield_at_size[1,sp,,m])
+		
+		rValues[sp,m] <- calib_test$estimate
+		
+		pValues[sp,m] <- calib_test$p.value
+  }
+}
+
+
+# Helpful things for plotting
+species <- species_params(params)$species
+pal <- viridis(10)
+
+
+# Plots
+par(mfrow = c(3,4))
+for (sp in seq(1,12,1)) {
+  for (m in seq(1,10,1)) {
+    plot(log10(params@w), log10(yield_at_size[1,sp,,m]), type = "l", col = pal[m], 
+         xlim = c(-2,6), ylim = c(-3,10))
+    par(new = TRUE)
+  }
+ 
+	plot(log10(params@w), log10(observedN[sp,]), type = "l", col = "black", xlim = c(-2,6), ylim = c(-3,10))
+	par(new = TRUE)
+	plot(log10(params@w), log10(observedN[sp,]/0.06), type = "l", lty = 2,col = "black", xlim = c(-2,6), ylim = c(-3,10), main = species[sp])
+	text(0, 9, paste("r = ",signif(rValues[sp],3)))
+	text(0, 7, paste("p = ",signif(pValues[sp],3)))
+	# dev.off()
+}
+
+# The observed catch is roughly 20% of the total catch.
+# And every third fish is measured.
+# Hence the '/0.06' for the plot (0.2 * 0.3 = 0.06)
+# The observed lengths were converted to weights.
+# See Woodworth-Jefcoats et al. 2019 for l-w conversion references.
+```
+All correlations are significant (max p-value = 0.0313244).  r-values range from 0.2154661 to 0.9275053, with a mean of 0.6685567 and a median of 0.7276673.  The comparison to observed catch looks about as good as it has for previous iterations.  Some species are better than others, as has been the case.  Improved understanding of species' size structure, life history, and stock-recruit relationships could possibly improve model fit.  
