@@ -1,0 +1,29 @@
+---
+title: "Workflow_Fishing"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: "2024-02-29"
+output: html_document
+---
+
+__Workflow for processing LENS data for use with therMizer__  
+This document describes the workflow for validating the LENS base runs and creating various future fishing scenarios.  
+
+The scripts mentioned are in the top-level directory and in FishingForcing.  Where possible, the data files are in FishingForcing/DataFiles.  Some of the
+data files are too large to include in this repository.
+
+This workflow happens in [R](https://www.r-project.org/).  
+
+## Validation run
+The script `MAPP_run_therMizer_FishingValidation.Rmd` was used to do a single run with each LENS ensemble member.  The script `LENS_validation.Rmd` was used to compare modeled and observed catches.
+
+## Baseline simulation - constant fishing
+The script `MAPP_run_therMizer_Baseline.Rmd` was used to create baseline runs for each ensemble member, with F held constant at 0.2.  The script `Baseline_Results.Rmd` was used to put together some summary plots and analyses of results.
+
+## Final Products
+### Validation runs
+The validation runs are found in `FishingForcing/DataFiles` using the naming convention 
+`LENS_n_validate.Rdata` where n is the ensemble member, 1 - 10.
+
+### Baseline runs
+The baseline runs are found in `FishingForcing/DataFiles` using the naming convention 
+`LENS_n_baseline.Rdata` where n is the ensemble member, 1 - 10.
