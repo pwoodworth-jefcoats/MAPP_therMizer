@@ -41,7 +41,7 @@ Further details about preparing these simulation forcings can be found in
 `Workflow_Fishing.Rmd`.
 
 ## therMizer Simulations
-TBD was used to run the therMizer simulations.
+`MAPP_run_therMizer_Baseline.Rmd` was used to run baseline therMizer simulations.  Ten baseline simulations were run, one each with input from each LENS ensemble member, all with fishing mortality set a 0.2.
 
 Further information, including all code, for the [mizer](https://sizespectrum.org/mizer/) food web model and 
 the [therMizer](https://github.com/sizespectrum/therMizer) model extension is available online.
