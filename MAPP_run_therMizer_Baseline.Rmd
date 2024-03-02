@@ -41,7 +41,7 @@ time_steps <- seq(0,85,1)
 Straightforward approach to run each ensemble member while keeping the inputs the correct dimensions (and avoiding a lot of re-coding or condensing all the chunks into a single loop):
 ```{r}
 # Ensemble member (1 - 10)
-m = 10
+m = 1
 ```
 
 Set up the resource:
@@ -137,7 +137,7 @@ plot(sim_steady_F)
 Run simulations:
 ```{r}
 # And do a simulation using the steady parameters
-projection_steady_F <- project(params_steady_F, dt = 1/12, t_max = 86, t_save = 1/12, effort = 0.2)
+projection_steady_F <- project(params_steady_F, dt = 1/12, t_max = 86, t_save = 1, effort = 0.2)
 
 # Test to see how things look
 plot(projection_steady_F)
