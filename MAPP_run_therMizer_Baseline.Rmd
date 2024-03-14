@@ -41,7 +41,7 @@ time_steps <- seq(0,85,1)
 Straightforward approach to run each ensemble member while keeping the inputs the correct dimensions (and avoiding a lot of re-coding or condensing all the chunks into a single loop):
 ```{r}
 # Ensemble member (1 - 10)
-m = 1
+m = 10
 ```
 
 Set up the resource:
