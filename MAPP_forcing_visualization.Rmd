@@ -1,0 +1,256 @@
+---
+title: "MAPP_forcing_visualization"
+author: "Phoebe.Woodworth-Jefcoats@noaa.gov"
+date: "2024-03-11"
+output: html_document
+---
+
+## Visualize LENS forcing
+This script creates a few plots to visualize the LENS forcing for the therMizer simulations.
+
+Set up the environment:
+```{r}
+# Load libraries
+library(mizer)
+library(here)
+library("remotes")
+remotes::install_github("sizespectrum/therMizer")
+library("therMizer")
+library("nmfspalette")
+```
+
+Load slope, intercept, and ocean temperature:
+```{r}
+load(here("ClimateForcing", "Plankton", "DataFiles",
+          "LENS_resource_slope_S1.075I1.975.Rdata"))
+
+load(here("ClimateForcing", "Plankton", "DataFiles",
+          "LENS_resource_intercept_S1.075I1.975.Rdata"))
+
+time_steps <- seq(2016, 2100, 1)
+members <- seq(1, 10, 1)
+for (m in seq(1,10,1)) {
+  if (m < 10) {
+    ocean_temp <- read.table(here("ClimateForcing", "Temperature", "DataFiles",
+                                  paste("LE2_00", m, "_ocean_temp_realm_array.dat", sep = "")))
+    } else {
+      ocean_temp <- read.table(here("ClimateForcing", "Temperature", "DataFiles",
+                                    paste("LE2_0", m, "_ocean_temp_realm_array.dat", sep = "")))
+    }
+  
+  ocean_temp <- as(ocean_temp, "matrix")
+  r <- colnames(ocean_temp)
+  
+  # On the first loop, make the array
+  if (m == 1) {
+    ocean_temp_array <- array(NA, dim = c(length(time_steps), length(r), length(members)), dimnames = list(time = time_steps, realm_names = r, LENS_member = members))
+  }
+  
+  ocean_temp_array[1, , m] <- ocean_temp[1,]
+  for (t in seq(1,length(time_steps) - 1, 1)) {
+    ocean_temp_array[t + 1, , m] <- ocean_temp[t,]
+  }
+}
+  
+# Load vertical migration and exposure
+load("HIregion_vertical_migration_array.Rdata") # Note: this is named vertical_migration_array
+
+HIexposure <- read.table("HIregion_exposure_array.dat")
+HIexposure <- as(HIexposure, "matrix")
+```
+
+Make some plots
+```{r}
+# palette for ensemble members
+pal <- nmfs_palette("oceans")(10)
+
+# pdf(here("Figures", "LENSslope.pdf"))
+for (m in seq(1, 10, 1)) {
+  plot(2016:2100, LENS_slope[2:86,1,m], xlim = c(2016, 2100), ylim = c(-0.99, -0.90), 
+       col = pal[m], type = "l", lwd = 2, xlab = " ", ylab = " ")
+  par(new = TRUE)
+  plot(2016:2100, LENS_slope[2:86,1,m] / 1.075, xlim = c(2016, 2100), ylim = c(-0.99, -0.90), 
+       col = pal[m], type = "l", lwd = 0.5, xlab = " ", ylab = " ")
+  par(new = TRUE)
+}
+axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+axis((2), at = c(seq(-0.99, -0.90, 0.01)))
+# dev.off()
+
+# pdf(here("Figures", "LENSintercept.pdf"))
+for (m in seq(1, 10, 1)) {
+  plot(2016:2100, LENS_intercept[2:86,1,m], xlim = c(2016, 2100), ylim = c(2.9, 5.9), 
+       col = pal[m], type = "l", lwd = 2, xlab = " ", ylab = " ")
+  par(new = TRUE)
+  plot(2016:2100, LENS_intercept[2:86,1,m] / 1.975, xlim = c(2016, 2100), ylim = c(2.9, 5.9), 
+       col = pal[m], type = "l", lwd = 0.5, xlab = " ", ylab = " ")
+  par(new = TRUE)
+}
+axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+axis((2), at = c(seq(2.9, 5.9, 0.5)))
+# dev.off()
+```
+
+Do some math for plotting temperature
+```{r}
+# Bigeye tuna example
+# pdf(here("Figures", "BigeyeTuna_TemperatureExample.pdf"))
+for (m in seq(1, 10, 1)) {
+  bye_T1 <- ocean_temp_array[,4,m] * vertical_migration_array[4,1,1] * HIexposure[4,1]
+  bye_T2 <- ocean_temp_array[,12,m] * vertical_migration_array[12,1,1] * HIexposure[12,1]
+  bye_T3 <- ocean_temp_array[,17,m] * vertical_migration_array[17,1,1] * HIexposure[17,1]
+  bye_T <- bye_T1 + bye_T2 + bye_T3
+  plot(2016:2100, ocean_temp_array[,4,m], col = pal[m], type = "l", lwd = 0.5,
+       xlim = c(2016, 2100), ylim = c(9,26), xlab = " ", ylab = " ")
+  par(new = TRUE)
+  plot(2016:2100, ocean_temp_array[,12,m], col = pal[m], type = "l", lwd = 0.5,
+       xlim = c(2016, 2100), ylim = c(9,26), xlab = " ", ylab = " ")
+  par(new = TRUE)
+  plot(2016:2100, ocean_temp_array[,17,m], col = pal[m], type = "l", lwd = 0.5,
+       xlim = c(2016, 2100), ylim = c(9,26), xlab = " ", ylab = " ")
+  par(new = TRUE)
+  plot(2016:2100, bye_T, col = pal[m], type = "l", lwd = 2,
+       xlim = c(2016, 2100), ylim = c(9,26), xlab = " ", ylab = " ")
+  par(new = TRUE)
+}
+axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+axis((2), at = c(9, 10, 15, 20, 25, 26))
+# dev.off()
+
+Realized_temp <- array(NA, dim = c(85,12,10))
+for (m in seq(1,10,1)) {
+  for (sp in seq(1,12,1)) {
+    realms2use <- which(HIexposure[,sp] == 1)
+    sp_temp_hold <- matrix(NA, nrow = length(realms2use), ncol = 85)
+    if (length(realms2use > 1)) {
+      for (r in seq(1,length(realms2use),1)) {
+        sp_temp_hold[r,] <- ocean_temp_array[,realms2use[r],m] * 
+          vertical_migration_array[realms2use[r],sp,1] * HIexposure[realms2use[r],sp]
+      }
+      Realized_temp[,sp,m] <- colSums(sp_temp_hold)
+    } else {
+      Realized_temp[,sp,m] <- ocean_temp_array[,realms2use,m] * 
+        vertical_migration_array[realms2use,sp,1] * HIexposure[realms2use,sp]
+    }
+  }
+}
+
+# Rank species in order of catch
+species <- dimnames(HIexposure)[[2]]
+species_order <- c(11,1,2,3,4,5,6,12,8,7,9,10)
+
+# pdf(here("Figures", "TemperatureExposure.pdf"))
+par(pin = c(1,1))
+par(mfrow = c(2,6))
+for (sp in species_order) {
+	for (m in seq(1,10,1)) {
+	  plot(2016:2100, Realized_temp[, sp, m], type = "l", lwd = 1, col = pal[m], 
+	       xlim = c(2016, 2100), ylim = c(8, 28), xlab = " ", ylab = " ", main = species[sp])
+		par(new = TRUE)
+	}
+	axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+	axis((2), at = c(8, 10, 15, 20, 25, 28))
+}
+# dev.off()
+```
+
+Scalers for metabolism and encounter rate, across all ensemble members (note that this
+section borrows code from the [therMizer extension](https://github.com/sizespectrum/therMizer/blob/main/R/plots.R), repurposed to allow for repeating across ensemble members):
+```{r}
+LENS_metab <- array(NA, dim = c(85,12,10))
+LENS_encounter <- array(NA, dim = c(85,12,10))
+
+# Load one simulation to access its parameters (which are the same across all)
+load(here("FishingForcing", "DataFiles", "LENS_1_baseline.Rdata"))
+sim_LENS_1 <- projection_steady_F
+rm(projection_steady_F)
+
+# Code from ther therMizer extension, modified slightly as needed
+for (m in seq(1, 10, 1)) {
+  for (t in as.numeric(dimnames(ocean_temp_array)[[1]]) - 2015) {
+    # Encounter
+    LENS_encounter[t,,m] <- scaled_temp_effect(sim_LENS_1@params,t) |>
+      apply(1,mean) # NOTE: this needs to be fixed to cover all ensemble members
+    
+    # Metabolism
+    temp_effect_metab_realms <- array(NA, dim = c(dim(vertical_migration_array)), dimnames = c(dimnames(vertical_migration_array)))
+
+    # Looping through each realm
+    nb_realms <- dim(HIexposure)[1]
+    for (r in seq(1, nb_realms, 1)) {
+      temp_at_t <- ocean_temp_array[t, r, m]
+      # Arrhenius equation
+      unscaled_temp_effect <- (exp(25.22 - (0.63/((8.62e-5)*(273 + temp_at_t)))))
+
+      # Arrhenius equation scaled to a value between 0 and 1
+      temp_effect_metabolism_r <- (unscaled_temp_effect - sim_LENS_1@params@species_params$metab_min) / sim_LENS_1@params@species_params$metab_range
+
+      # Set temperature effect to 0 if temperatures are outside thermal tolerance limits
+      above_max <- temp_at_t > sim_LENS_1@params@species_params$temp_max
+      below_min <- temp_at_t < sim_LENS_1@params@species_params$temp_min
+
+      temp_effect_metabolism_r[above_max | below_min] = 0
+
+      temp_effect_metab_realms[r,,] <- temp_effect_metabolism_r*HIexposure[r,]*vertical_migration_array[r,,]
+    }
+    LENS_metab[t,,m] <- colSums(temp_effect_metab_realms) |>
+      apply(1,mean) 
+  }
+}
+
+# pdf(here("Figures", "ScaledEncounter.pdf"))
+par(pin = c(1,1))
+par(mfrow = c(2,6))
+for (sp in species_order) {
+	for (m in seq(1,10,1)) {
+	  plot(2016:2100, LENS_encounter[, sp, m], type = "l", lwd = 1, col = pal[m], 
+	       xlim = c(2016, 2100), ylim = c(0, 1), xlab = " ", ylab = " ", main = species[sp])
+		par(new = TRUE)
+	}
+	axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+	axis((2), at = c(seq(1,1,0.2)))
+}
+# dev.off()
+
+# pdf(here("Figures", "ScaledMetabolism.pdf"))
+par(pin = c(1,1))
+par(mfrow = c(2,6))
+for (sp in species_order) {
+	for (m in seq(1,10,1)) {
+	  plot(2016:2100, LENS_metab[, sp, m], type = "l", lwd = 1, col = pal[m], 
+	       xlim = c(2016, 2100), ylim = c(0, 1), xlab = " ", ylab = " ", main = species[sp])
+		par(new = TRUE)
+	}
+	axis((1), at = c(2016, 2020, 2040, 2060, 2080, 2100))
+	axis((2), at = c(seq(1,1,0.2)))
+}
+# dev.off()
+
+# And, finally, the plot showing each species' thermal range and how their metabolism and aerobic scope are affected over those ranges.  Again, borrowing therMizer code.
+sp_scale <- plotTherPerformance(sim_LENS_1@params, return_data = TRUE)
+pdf(here("Figures", "ThermalPerformance.pdf"))
+par(pin = c(1,1))
+par(mfrow = c(2,6))
+for (sp in species_order) {
+  enc_idx <- which(sp_scale$Species == species[sp] & sp_scale$Type == 'Encounter')
+  sp_encounter <- sp_scale[enc_idx,]
+  
+  met_idx <- which(sp_scale$Species == species[sp] & sp_scale$Type == 'Metabolism')
+  sp_metab <- sp_scale[met_idx,]
+  
+  plot(sp_encounter$temperature, sp_encounter$scalar, type = "l", lwd = 1, 
+       col = nmfspalette::nmfs_cols("southeast"),
+       xlim = c(0, 35), ylim = c(0, 1), xlab = " ", ylab = " ", main = species[sp])
+  par(new = TRUE)
+  plot(sp_metab$temperature, sp_metab$scalar, type = "l", lwd = 1, 
+       col = nmfspalette::nmfs_cols("midatlantic"),
+       xlim = c(0, 35), ylim = c(0, 1), xlab = " ", ylab = " ", main = species[sp])
+  par(new = TRUE)
+  axis((1), at = c(seq(0, 35, 5)))
+  axis((2), at = seq(0,1,0.2))
+}
+dev.off()
+  
+
+
+```

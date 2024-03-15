@@ -7,7 +7,8 @@ complete.
 
 ## Climate Forcing
 therMizer is forced by both temperature and plankton data. These data
-come from members of the CESM2 earth system model large ensemble (LENS).
+come from members of the CESM2 earth system model large ensemble (LENS).  `MAPP_forcing_visualization.Rmd` was used to visualize some of the LENS 
+data that was used to force therMizer.
 
 ### Temperature data
 Temperature was vertically averaged over depth ranges representative of 
@@ -41,7 +42,7 @@ Further details about preparing these simulation forcings can be found in
 `Workflow_Fishing.Rmd`.
 
 ## therMizer Simulations
-`MAPP_run_therMizer_Baseline.Rmd` was used to run baseline therMizer simulations.  Ten baseline simulations were run, one each with input from each LENS ensemble member, all with fishing mortality set a 0.2.
+`MAPP_run_therMizer_Baseline.Rmd` was used to run baseline therMizer simulations.  Ten baseline simulations were run, one each with input from each LENS ensemble member, all with fishing mortality set a 0.2.  `MAPP_baseline_results.Rmd` was used to visualize simulation results.
 
 Further information, including all code, for the [mizer](https://sizespectrum.org/mizer/) food web model and 
 the [therMizer](https://github.com/sizespectrum/therMizer) model extension is available online.
