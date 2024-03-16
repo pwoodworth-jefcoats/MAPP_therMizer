@@ -2,8 +2,7 @@
 This repository is home to the code used to run therMizer simulations
 for a UH-NOAA MAPP collaboration.  It's currently being built out, so
 if you don't see a file that's mentioned know that it'll be available
-soon.  I'll remove this message once the basic construction is 
-complete.
+soon.  
 
 ## Climate Forcing
 therMizer is forced by both temperature and plankton data. These data
